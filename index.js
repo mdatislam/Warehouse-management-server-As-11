@@ -9,50 +9,44 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 app.use(cors());
 app.use(express.json());
 
-//pass:zKvLpwewootfjoYl
-//user: warehouse
-
-//user: warehouse1
-//pass: jhifxgobl57qC0Qi
-
-//pass: aIlMm4LSFD6EB0Xz
-// user: atiqul
 
 
-const uri = "mongodb+srv://atiqul:aIlMm4LSFD6EB0Xz@cluster0.agxjr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.agxjr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-/* client.connect(err => {
-  const collection = client.db("test").collection("devices");
-  // perform actions on the collection object
-  console.log('connect to Monogodb')
-  client.close();
-}); */
 
  async function run(){
     try{
         await client.connect();
         const productCollection = client.db('warehouse2').collection('products');
 
+        // All products Load from bd 
         app.get('/products', async (req,res)=>{
           const query={};
           const cursor= productCollection.find(query)
           const result= await cursor.toArray()
           res.send(result)
         });
-
+        // search required product from db 
+        app.get('/products/:id', async(req,res)=>{
+          const id = req.params.id
+          const query= {_id:ObjectId(id)} 
+          const result = await productCollection.findOne(query)
+          res.send(result)
+        })
+          // Product upload to db
         app.post('/products', async (req,res)=>{
             const data= req.body
             const product = await productCollection.insertOne(data)
             res.send(product)
         });
-
+        // selected product delete 
          app.delete('/products/:id', async(req,res)=>{
          const id= req.params.id;
          const query = {_id:ObjectId(id)}
          const result= await productCollection.deleteOne(query)
          res.send(result)
         }); 
-
+        // Selected product update
         app.put('/products/:id',async(req,res)=>{
           const id = req.params.id
           const updateProduct= req.body
